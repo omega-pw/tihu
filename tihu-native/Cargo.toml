@@ -1,6 +1,6 @@
 [package]
 name = "tihu-native"
-version = "0.1.1"
+version = "0.1.2"
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -11,8 +11,11 @@ description = "tihu-native is a native toolset written in Rust."
 [dependencies]
 bytes = "1"
 anyhow = "1"
+futures = "0.3"
+pin-project = "1"
 async-trait = "0.1"
 quick-xml = "0.36"
 hyper = "1"
 http-body-util = "0.1"
+sync_wrapper = { version = "1", features = ["futures"] }
 tihu = { version = "0.1.0", path="../tihu" }
