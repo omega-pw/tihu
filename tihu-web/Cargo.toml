@@ -1,10 +1,12 @@
 [package]
 name = "tihu-web"
 version = "0.1.0"
-authors = ["omega"]
-edition = "2018"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "tihu-web is a toolset written in Rust that can run in a web browser."
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-tihu = { path="../tihu" }
+tihu = { version = "0.1.0", path="../tihu" }

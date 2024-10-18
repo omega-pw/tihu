@@ -1,11 +1,13 @@
 [package]
 name = "tihu-native"
 version = "0.1.0"
-authors = ["omega"]
-edition = "2018"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "tihu-native is a native toolset written in Rust."
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 quick-xml = "0.36"
-tihu = { path="../tihu" }
+tihu = { version = "0.1.0", path="../tihu" }
