@@ -1,8 +1,10 @@
 [package]
 name = "tihu"
 version = "0.1.0"
-authors = ["omega"]
-edition = "2018"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "tihu is a toolset written in Rust."
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

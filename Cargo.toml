@@ -4,3 +4,8 @@ members = [
     "tihu-web",
     "tihu-native",
 ]
+
+[workspace.package]
+authors = ["omega <398914521@qq.com>"]
+edition = "2021"
+license = "MIT OR Apache-2.0"
