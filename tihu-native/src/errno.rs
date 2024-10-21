@@ -1,3 +1,4 @@
+use tihu::api::Response;
 use tihu::LightString;
 
 #[derive(thiserror::Error, Debug)]
@@ -95,6 +96,12 @@ impl ErrNo {
     }
     pub fn message(&self) -> LightString {
         return self.to_string().into();
+    }
+}
+
+impl<T> From<ErrNo> for Response<T> {
+    fn from(err_no: ErrNo) -> Response<T> {
+        return Response::failure(err_no.code(), err_no.message(), None);
     }
 }
 
