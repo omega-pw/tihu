@@ -218,6 +218,7 @@ pub trait HttpHandler: Sync + Send + 'static {
         &self,
         request: Request<Incoming>,
         remote_addr: SocketAddr,
+        prefix: Option<&str>,
     ) -> Result<Response<BoxBody>, hyper::Error>;
 }
 
@@ -227,5 +228,6 @@ pub trait HttpAuthorizer: Sync + Send + 'static {
         &self,
         request: Request<Incoming>,
         remote_addr: SocketAddr,
+        prefix: Option<&str>,
     ) -> Result<bool, hyper::Error>;
 }
