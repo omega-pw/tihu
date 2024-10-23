@@ -220,3 +220,12 @@ pub trait HttpHandler: Sync + Send + 'static {
         remote_addr: SocketAddr,
     ) -> Result<Response<BoxBody>, hyper::Error>;
 }
+
+#[async_trait]
+pub trait HttpAuthorizer: Sync + Send + 'static {
+    async fn authorize(
+        &self,
+        request: Request<Incoming>,
+        remote_addr: SocketAddr,
+    ) -> Result<bool, hyper::Error>;
+}
