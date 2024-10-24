@@ -226,7 +226,7 @@ pub trait HttpHandler: Sync + Send + 'static {
 pub trait HttpAuthorizer: Sync + Send + 'static {
     async fn authorize(
         &self,
-        request: Request<Incoming>,
+        request: &Request<Incoming>,
         remote_addr: SocketAddr,
         prefix: Option<&str>,
     ) -> Result<bool, hyper::Error>;
