@@ -78,3 +78,8 @@ impl FromStr for Id {
         i64::from_str(src).map(From::from)
     }
 }
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct PrimaryKey {
+    pub id: Id,
+}

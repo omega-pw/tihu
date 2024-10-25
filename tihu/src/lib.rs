@@ -22,6 +22,7 @@ pub use api::ApiResult;
 pub use bytes::Bytes;
 pub use handler::Handler;
 pub use id::Id;
+pub use id::PrimaryKey;
 pub use light_string::LightString;
 pub use middleware::Middleware;
 pub use pagination::Pagination;
