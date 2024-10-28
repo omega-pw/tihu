@@ -3,6 +3,8 @@ use tihu::LightString;
 
 #[derive(thiserror::Error, Debug)]
 pub enum ErrNo {
+    #[error("用户未登录")]
+    LoginRequired,
     #[error("{0}")]
     CommonError(LightString),
     #[error("{0}")]
@@ -31,8 +33,6 @@ pub enum ErrNo {
     ParamInvalid(LightString),
     #[error("令牌无效")]
     TokenInvalid,
-    #[error("用户未登录")]
-    LoginRequired,
     #[error("没有权限")]
     NotAllowed,
     #[error("访问太频繁")]
@@ -64,21 +64,21 @@ pub enum ErrNo {
 impl ErrNo {
     pub fn code(&self) -> i32 {
         return match *self {
-            ErrNo::CommonError(_) => -1,
-            ErrNo::Other(_) => -2,
-            ErrNo::ConfigError(_) => -3,
-            ErrNo::NoService(_) => -4,
-            ErrNo::ServiceBusy(_) => -5,
-            ErrNo::ServicePaused => -6,
-            ErrNo::NoSuchApi => -7,
-            ErrNo::SerializeError(_) => -8,
-            ErrNo::DeserializeError(_) => -9,
-            ErrNo::ApiError(_) => -10,
-            ErrNo::Utf8Only => -11,
-            ErrNo::ParamFormatError => -12,
-            ErrNo::ParamInvalid(_) => -13,
-            ErrNo::TokenInvalid => -14,
-            ErrNo::LoginRequired => -15,
+            ErrNo::LoginRequired => -1,
+            ErrNo::CommonError(_) => -2,
+            ErrNo::Other(_) => -3,
+            ErrNo::ConfigError(_) => -4,
+            ErrNo::NoService(_) => -5,
+            ErrNo::ServiceBusy(_) => -6,
+            ErrNo::ServicePaused => -7,
+            ErrNo::NoSuchApi => -8,
+            ErrNo::SerializeError(_) => -9,
+            ErrNo::DeserializeError(_) => -10,
+            ErrNo::ApiError(_) => -11,
+            ErrNo::Utf8Only => -12,
+            ErrNo::ParamFormatError => -13,
+            ErrNo::ParamInvalid(_) => -14,
+            ErrNo::TokenInvalid => -15,
             ErrNo::NotAllowed => -16,
             ErrNo::TooFrequent => -17,
             ErrNo::MultipartRequired => -18,
