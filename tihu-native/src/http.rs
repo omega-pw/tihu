@@ -9,7 +9,10 @@ use hyper::body::Frame;
 use hyper::body::Incoming;
 use hyper::{Request, Response};
 use pin_project::pin_project;
+use std::any::Any;
+use std::any::TypeId;
 use std::borrow::Cow;
+use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
 use std::net::SocketAddr;
 use std::pin::Pin;
@@ -218,8 +221,9 @@ pub trait HttpHandler: Sync + Send + 'static {
         &self,
         request: Request<Incoming>,
         remote_addr: SocketAddr,
+        data_cache: &mut HttpDataCache,
         prefix: Option<&str>,
-    ) -> Result<Response<BoxBody>, hyper::Error>;
+    ) -> Result<Response<BoxBody>, anyhow::Error>;
 }
 
 #[async_trait]
@@ -228,6 +232,55 @@ pub trait HttpAuthorizer: Sync + Send + 'static {
         &self,
         request: &Request<Incoming>,
         remote_addr: SocketAddr,
+        data_cache: &mut HttpDataCache,
         prefix: Option<&str>,
-    ) -> Result<bool, hyper::Error>;
+    ) -> Result<bool, anyhow::Error>;
+}
+
+#[async_trait]
+pub trait HttpData {
+    async fn try_extract(
+        request: &Request<Incoming>,
+        remote_addr: SocketAddr,
+        data_cache: &mut HttpDataCache,
+    ) -> Result<Self, anyhow::Error>
+    where
+        Self: Sized;
+}
+
+#[derive(Default)]
+pub struct HttpDataCache {
+    map: HashMap<TypeId, Box<dyn Any>>,
+}
+
+impl HttpDataCache {
+    pub fn new() -> Self {
+        Default::default()
+    }
+}
+
+impl HttpDataCache {
+    pub async fn try_get<T>(
+        &mut self,
+        request: &Request<Incoming>,
+        remote_addr: SocketAddr,
+    ) -> Result<&T, anyhow::Error>
+    where
+        T: HttpData + 'static,
+    {
+        let type_id = TypeId::of::<T>();
+        let exist = self.map.get(&type_id).is_some();
+        if !exist {
+            let data = T::try_extract(request, remote_addr, self).await?;
+            self.map.insert(type_id, Box::new(data));
+        }
+        let data = self
+            .map
+            .get(&type_id)
+            .ok_or_else(|| LightString::from_static("Data is empty!"))?;
+        let data = data
+            .downcast_ref::<T>()
+            .ok_or_else(|| LightString::from_static("Data not match the type!"))?;
+        return Ok(data);
+    }
 }
