@@ -1,6 +1,6 @@
 [package]
 name = "tihu-native"
-version = "0.1.9"
+version = "0.1.10"
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -17,6 +17,7 @@ futures = "0.3"
 pin-project = "1"
 async-trait = "0.1"
 quick-xml = "0.36"
+headers = "0.4.0"
 hyper = "1"
 http-body-util = "0.1"
 sync_wrapper = { version = "1", features = ["futures"] }

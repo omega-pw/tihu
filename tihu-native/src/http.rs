@@ -4,6 +4,8 @@ use bytes::BytesMut;
 use futures::Stream;
 use futures::StreamExt;
 use futures::TryStreamExt;
+use headers::Cookie;
+use headers::HeaderMapExt;
 use http_body_util::BodyExt;
 use hyper::body::Frame;
 use hyper::body::Incoming;
@@ -250,7 +252,7 @@ pub trait HttpData {
 
 #[derive(Default)]
 pub struct HttpDataCache {
-    map: HashMap<TypeId, Box<dyn Any>>,
+    data_map: HashMap<TypeId, Box<dyn Any>>,
 }
 
 impl HttpDataCache {
@@ -269,18 +271,30 @@ impl HttpDataCache {
         T: HttpData + 'static,
     {
         let type_id = TypeId::of::<T>();
-        let exist = self.map.get(&type_id).is_some();
+        let exist = self.data_map.get(&type_id).is_some();
         if !exist {
             let data = T::try_extract(request, remote_addr, self).await?;
-            self.map.insert(type_id, Box::new(data));
+            self.data_map.insert(type_id, Box::new(data));
         }
         let data = self
-            .map
+            .data_map
             .get(&type_id)
             .ok_or_else(|| LightString::from_static("Data is empty!"))?;
         let data = data
             .downcast_ref::<T>()
             .ok_or_else(|| LightString::from_static("Data not match the type!"))?;
         return Ok(data);
+    }
+}
+
+#[async_trait]
+impl HttpData for Option<Cookie> {
+    async fn try_extract(
+        request: &Request<Incoming>,
+        _remote_addr: SocketAddr,
+        _data_cache: &mut HttpDataCache,
+    ) -> Result<Self, anyhow::Error> {
+        let cookie = request.headers().typed_get::<Cookie>();
+        return Ok(cookie);
     }
 }
