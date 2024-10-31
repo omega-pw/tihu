@@ -240,7 +240,7 @@ pub trait HttpAuthorizer: Sync + Send + 'static {
 }
 
 #[async_trait]
-pub trait HttpData {
+pub trait HttpData: Sync + Send + 'static {
     async fn try_extract(
         request: &Request<Incoming>,
         remote_addr: SocketAddr,
@@ -252,7 +252,7 @@ pub trait HttpData {
 
 #[derive(Default)]
 pub struct HttpDataCache {
-    data_map: HashMap<TypeId, Box<dyn Any>>,
+    data_map: HashMap<TypeId, Box<dyn Any + Sync + Send>>,
 }
 
 impl HttpDataCache {
@@ -268,7 +268,7 @@ impl HttpDataCache {
         remote_addr: SocketAddr,
     ) -> Result<&T, anyhow::Error>
     where
-        T: HttpData + 'static,
+        T: HttpData,
     {
         let type_id = TypeId::of::<T>();
         let exist = self.data_map.get(&type_id).is_some();
