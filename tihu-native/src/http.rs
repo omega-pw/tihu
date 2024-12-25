@@ -6,9 +6,15 @@ use futures::StreamExt;
 use futures::TryStreamExt;
 use headers::Cookie;
 use headers::HeaderMapExt;
+use http::Extensions;
 use http_body_util::BodyExt;
 use hyper::body::Frame;
 use hyper::body::Incoming;
+use hyper::header::HeaderValue;
+use hyper::HeaderMap;
+use hyper::Method;
+use hyper::Uri;
+use hyper::Version;
 use hyper::{Request, Response};
 use pin_project::pin_project;
 use std::any::Any;
@@ -223,7 +229,7 @@ pub trait HttpHandler: Sync + Send + 'static {
         &self,
         request: Request<Incoming>,
         remote_addr: SocketAddr,
-        data_cache: &mut HttpDataCache,
+        request_data: &mut RequestData,
         prefix: Option<&str>,
     ) -> Result<Response<BoxBody>, anyhow::Error>;
 }
@@ -234,41 +240,41 @@ pub trait HttpAuthorizer: Sync + Send + 'static {
         &self,
         request: &Request<Incoming>,
         remote_addr: SocketAddr,
-        data_cache: &mut HttpDataCache,
+        request_data: &mut RequestData,
         prefix: Option<&str>,
     ) -> Result<bool, anyhow::Error>;
 }
 
 #[async_trait]
-pub trait HttpData: Sync + Send + 'static {
+pub trait FromRequest: Sync + Send + 'static {
     async fn try_extract(
         request: &Request<Incoming>,
         remote_addr: SocketAddr,
-        data_cache: &mut HttpDataCache,
+        request_data: &mut RequestData,
     ) -> Result<Self, anyhow::Error>
     where
         Self: Sized;
 }
 
 #[derive(Default)]
-pub struct HttpDataCache {
+pub struct RequestData {
     data_map: HashMap<TypeId, Box<dyn Any + Sync + Send>>,
 }
 
-impl HttpDataCache {
+impl RequestData {
     pub fn new() -> Self {
         Default::default()
     }
 }
 
-impl HttpDataCache {
+impl RequestData {
     pub async fn try_get<T>(
         &mut self,
         request: &Request<Incoming>,
         remote_addr: SocketAddr,
     ) -> Result<&T, anyhow::Error>
     where
-        T: HttpData,
+        T: FromRequest,
     {
         let type_id = TypeId::of::<T>();
         let exist = self.data_map.get(&type_id).is_some();
@@ -285,16 +291,106 @@ impl HttpDataCache {
             .ok_or_else(|| LightString::from_static("Data not match the type!"))?;
         return Ok(data);
     }
+    pub fn remove<T>(&mut self) -> Result<Option<Box<T>>, anyhow::Error>
+    where
+        T: FromRequest,
+    {
+        let type_id = TypeId::of::<T>();
+        if let Some(data) = self.data_map.remove(&type_id) {
+            match data.downcast::<T>() {
+                Ok(data) => {
+                    return Ok(Some(data));
+                }
+                Err(data) => {
+                    self.data_map.insert(type_id, Box::new(data));
+                    return Err(LightString::from_static("Data not match the type!").into());
+                }
+            }
+        } else {
+            return Ok(None);
+        }
+    }
+    pub async fn remove_or_get<T>(
+        &mut self,
+        request: &Request<Incoming>,
+        remote_addr: SocketAddr,
+    ) -> Result<T, anyhow::Error>
+    where
+        T: FromRequest,
+    {
+        let data_opt = self.remove::<T>()?;
+        if let Some(data) = data_opt {
+            return Ok(*data);
+        } else {
+            let data = T::try_extract(request, remote_addr, self).await?;
+            return Ok(data);
+        }
+    }
 }
 
 #[async_trait]
-impl HttpData for Option<Cookie> {
+impl FromRequest for Option<Cookie> {
     async fn try_extract(
         request: &Request<Incoming>,
         _remote_addr: SocketAddr,
-        _data_cache: &mut HttpDataCache,
+        _request_data: &mut RequestData,
     ) -> Result<Self, anyhow::Error> {
         let cookie = request.headers().typed_get::<Cookie>();
         return Ok(cookie);
+    }
+}
+
+#[async_trait]
+impl FromRequest for Method {
+    async fn try_extract(
+        request: &Request<Incoming>,
+        _remote_addr: SocketAddr,
+        _request_data: &mut RequestData,
+    ) -> Result<Self, anyhow::Error> {
+        return Ok(request.method().clone());
+    }
+}
+
+#[async_trait]
+impl FromRequest for Uri {
+    async fn try_extract(
+        request: &Request<Incoming>,
+        _remote_addr: SocketAddr,
+        _request_data: &mut RequestData,
+    ) -> Result<Self, anyhow::Error> {
+        return Ok(request.uri().clone());
+    }
+}
+
+#[async_trait]
+impl FromRequest for Version {
+    async fn try_extract(
+        request: &Request<Incoming>,
+        _remote_addr: SocketAddr,
+        _request_data: &mut RequestData,
+    ) -> Result<Self, anyhow::Error> {
+        return Ok(request.version());
+    }
+}
+
+#[async_trait]
+impl FromRequest for HeaderMap<HeaderValue> {
+    async fn try_extract(
+        request: &Request<Incoming>,
+        _remote_addr: SocketAddr,
+        _request_data: &mut RequestData,
+    ) -> Result<Self, anyhow::Error> {
+        return Ok(request.headers().clone());
+    }
+}
+
+#[async_trait]
+impl FromRequest for Extensions {
+    async fn try_extract(
+        request: &Request<Incoming>,
+        _remote_addr: SocketAddr,
+        _request_data: &mut RequestData,
+    ) -> Result<Self, anyhow::Error> {
+        return Ok(request.extensions().clone());
     }
 }
