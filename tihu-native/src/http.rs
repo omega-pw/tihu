@@ -224,7 +224,7 @@ where
 
 #[async_trait]
 pub trait HttpHandler: Sync + Send + 'static {
-    fn namespace(&self) -> &[&'static str];
+    fn namespace(&self) -> &[LightString];
     async fn handle(
         &self,
         request: Request<Incoming>,
