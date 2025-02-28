@@ -10,13 +10,13 @@ pub struct Id8(pub i64);
 
 impl fmt::Display for Id8 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.0)
+        fmt::Display::fmt(&self.0, f)
     }
 }
 
 impl PartialEq<i64> for Id8 {
     fn eq(&self, other: &i64) -> bool {
-        self.0 == *other
+        PartialEq::eq(&self.0, other)
     }
 }
 
@@ -25,8 +25,7 @@ impl Serialize for Id8 {
     where
         S: Serializer,
     {
-        let s = format!("{}", self.0);
-        serializer.serialize_str(&s)
+        <i64 as Serialize>::serialize(&self.0, serializer)
     }
 }
 
@@ -35,10 +34,7 @@ impl<'de> Deserialize<'de> for Id8 {
     where
         D: Deserializer<'de>,
     {
-        let s = String::deserialize(deserializer)?;
-        i64::from_str_radix(&s, 10)
-            .map(Id8)
-            .map_err(serde::de::Error::custom)
+        <i64 as Deserialize>::deserialize(deserializer).map(From::from)
     }
 }
 
@@ -76,7 +72,7 @@ impl AsMut<i64> for Id8 {
 impl FromStr for Id8 {
     type Err = ParseIntError;
     fn from_str(src: &str) -> Result<Self, ParseIntError> {
-        i64::from_str(src).map(From::from)
+        <i64 as FromStr>::from_str(src).map(From::from)
     }
 }
 

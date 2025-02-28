@@ -27,5 +27,7 @@ pub use id::PrimaryKey;
 pub use light_string::LightString;
 pub use middleware::Middleware;
 pub use new_type;
+pub use newtypes::Uint32;
+pub use newtypes::Uint63;
 pub use pagination::Pagination;
 pub use validator;
