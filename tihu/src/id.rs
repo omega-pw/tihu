@@ -25,7 +25,8 @@ impl Serialize for Id8 {
     where
         S: Serializer,
     {
-        <i64 as Serialize>::serialize(&self.0, serializer)
+        let string = self.0.to_string();
+        <String as Serialize>::serialize(&string, serializer)
     }
 }
 
@@ -34,7 +35,10 @@ impl<'de> Deserialize<'de> for Id8 {
     where
         D: Deserializer<'de>,
     {
-        <i64 as Deserialize>::deserialize(deserializer).map(From::from)
+        let string = <String as Deserialize>::deserialize(deserializer)?;
+        i64::from_str_radix(&string, 10)
+            .map(Id8)
+            .map_err(serde::de::Error::custom)
     }
 }
 

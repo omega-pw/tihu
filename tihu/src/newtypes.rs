@@ -26,7 +26,8 @@ impl Serialize for Uint32 {
     where
         S: Serializer,
     {
-        <u32 as Serialize>::serialize(&self.0, serializer)
+        let string = self.0.to_string();
+        <String as Serialize>::serialize(&string, serializer)
     }
 }
 
@@ -35,7 +36,10 @@ impl<'de> Deserialize<'de> for Uint32 {
     where
         D: Deserializer<'de>,
     {
-        <u32 as Deserialize>::deserialize(deserializer).map(From::from)
+        let string = <String as Deserialize>::deserialize(deserializer)?;
+        u32::from_str_radix(&string, 10)
+            .map(Uint32)
+            .map_err(serde::de::Error::custom)
     }
 }
 
@@ -75,7 +79,8 @@ impl Serialize for Uint63 {
     where
         S: Serializer,
     {
-        <u64 as Serialize>::serialize(&self.0, serializer)
+        let string = self.0.to_string();
+        <String as Serialize>::serialize(&string, serializer)
     }
 }
 
@@ -84,7 +89,9 @@ impl<'de> Deserialize<'de> for Uint63 {
     where
         D: Deserializer<'de>,
     {
-        <u64 as Deserialize>::deserialize(deserializer).map(From::from)
+        let string = <String as Deserialize>::deserialize(deserializer)?;
+        let value = u64::from_str_radix(&string, 10).map_err(serde::de::Error::custom)?;
+        return Self::try_from_u64(value).map_err(serde::de::Error::custom);
     }
 }
 
