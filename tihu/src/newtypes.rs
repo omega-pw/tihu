@@ -2,6 +2,25 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 new_type::newtype!(Uint32: u32);
 
+impl Uint32 {
+    pub const MAX: Self = Self(u32::MAX);
+    pub const MIN: Self = Self(0);
+
+    pub fn try_from_i64(value: i64) -> Result<Self, Box<dyn std::error::Error + Sync + Send>> {
+        if 0 > value {
+            return Err(format!(
+                "Negative integer {} cannot be converted to positive integer.",
+                value
+            )
+            .into());
+        } else if (u32::MAX as i64) < value {
+            return Err(format!("The integer {} is too large.", value).into());
+        } else {
+            return Ok(Self(value as u32));
+        }
+    }
+}
+
 impl Serialize for Uint32 {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -21,6 +40,35 @@ impl<'de> Deserialize<'de> for Uint32 {
 }
 
 new_type::newtype!(Uint63: u64);
+
+impl Uint63 {
+    pub const MAX: Self = Self(i64::MAX as u64);
+    pub const MIN: Self = Self(0);
+
+    pub fn try_from_i64(value: i64) -> Result<Self, Box<dyn std::error::Error + Sync + Send>> {
+        if 0 > value {
+            return Err(format!(
+                "Negative integer {} cannot be converted to positive integer.",
+                value
+            )
+            .into());
+        } else {
+            return Ok(Self(value as u64));
+        }
+    }
+
+    pub fn try_from_u64(value: u64) -> Result<Self, Box<dyn std::error::Error + Sync + Send>> {
+        if Self::MAX.0 < value {
+            return Err(format!("The integer {} is too large.", value).into());
+        } else {
+            return Ok(Self(value));
+        }
+    }
+
+    pub fn check(&self) -> Result<(), Box<dyn std::error::Error + Sync + Send>> {
+        Self::try_from_u64(self.0).map(|_| ())
+    }
+}
 
 impl Serialize for Uint63 {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
@@ -82,21 +130,7 @@ mod postgres {
             <i64 as ToSql>::encode_format(&value, ty)
         }
     }
-    impl Uint32 {
-        fn try_from_i64(value: i64) -> Result<Self, Box<dyn std::error::Error + Sync + Send>> {
-            if 0 > value {
-                return Err(format!(
-                    "Negative integer {} cannot be converted to positive integer.",
-                    value
-                )
-                .into());
-            } else if (u32::MAX as i64) < value {
-                return Err(format!("The integer {} is too large.", value).into());
-            } else {
-                return Ok(Self(value as u32));
-            }
-        }
-    }
+
     impl<'a> FromSql<'a> for Uint32 {
         fn from_sql(
             ty: &Type,
@@ -155,19 +189,7 @@ mod postgres {
             <i64 as ToSql>::encode_format(&value, ty)
         }
     }
-    impl Uint63 {
-        fn try_from_i64(value: i64) -> Result<Self, Box<dyn std::error::Error + Sync + Send>> {
-            if 0 > value {
-                return Err(format!(
-                    "Negative integer {} cannot be converted to positive integer.",
-                    value
-                )
-                .into());
-            } else {
-                return Ok(Self(value as u64));
-            }
-        }
-    }
+
     impl<'a> FromSql<'a> for Uint63 {
         fn from_sql(
             ty: &Type,
