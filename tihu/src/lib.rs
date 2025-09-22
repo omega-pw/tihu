@@ -30,4 +30,3 @@ pub use newtypes::Uint32;
 pub use newtypes::Uint63;
 pub use pagination::Pagination;
 pub use shared_string::SharedString;
-pub use validator;
