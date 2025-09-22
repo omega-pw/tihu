@@ -1,4 +1,4 @@
-use super::LightString;
+use super::SharedString;
 use crate::Bytes;
 use async_trait::async_trait;
 use serde::de::DeserializeOwned;
@@ -28,11 +28,11 @@ pub trait ApiClient {
 pub trait Api {
     type Input;
     type Output;
-    fn namespace() -> LightString;
-    fn require_res_key() -> Option<LightString> {
+    fn namespace() -> SharedString;
+    fn require_res_key() -> Option<SharedString> {
         return None;
     }
-    fn validate_input(_: &Self::Input) -> Result<(), LightString> {
+    fn validate_input(_: &Self::Input) -> Result<(), SharedString> {
         return Ok(());
     }
     async fn call<Client, ClientOutput, E>(
@@ -61,7 +61,7 @@ pub trait Api {
 pub struct Response<T> {
     pub code: i32,
     pub data: Option<T>,
-    pub message: LightString,
+    pub message: SharedString,
 }
 
 impl<T> Response<T> {
@@ -69,10 +69,10 @@ impl<T> Response<T> {
         return Response {
             code: 0,
             data: data,
-            message: LightString::from_static("success"),
+            message: SharedString::from_static("success"),
         };
     }
-    pub fn failure(mut code: i32, msg: LightString, data: Option<T>) -> Response<T> {
+    pub fn failure(mut code: i32, msg: SharedString, data: Option<T>) -> Response<T> {
         if 0 == code {
             code = -1;
         }

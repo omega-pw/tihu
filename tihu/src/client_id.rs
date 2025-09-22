@@ -1,6 +1,6 @@
 use super::encoder;
 use super::version_data;
-use super::LightString;
+use super::SharedString;
 use chrono::DateTime;
 use chrono::Utc;
 use log;
@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ClientIdV1 {
-    rsa_pub_key: LightString,
+    rsa_pub_key: SharedString,
     expire_time: i64, //过期时间，单位：秒
 }
 
@@ -24,7 +24,7 @@ impl ClientIdV1 {
 }
 
 impl ClientId {
-    pub fn new(rsa_pub_key: LightString, expire_time: DateTime<Utc>) -> ClientId {
+    pub fn new(rsa_pub_key: SharedString, expire_time: DateTime<Utc>) -> ClientId {
         ClientId::V1(ClientIdV1 {
             rsa_pub_key,
             expire_time: expire_time.timestamp(),
@@ -37,7 +37,7 @@ impl ClientId {
         }
     }
 
-    pub fn rsa_pub_key(&self) -> &LightString {
+    pub fn rsa_pub_key(&self) -> &SharedString {
         match self {
             ClientId::V1(client_id) => &client_id.rsa_pub_key,
         }
@@ -57,8 +57,8 @@ impl ClientId {
 
     pub fn try_decode(
         client_id_data: &str,
-        check_signature: impl FnOnce(&str, &[u8], &[u8]) -> Result<bool, LightString>,
-    ) -> Result<ClientId, LightString> {
+        check_signature: impl FnOnce(&str, &[u8], &[u8]) -> Result<bool, SharedString>,
+    ) -> Result<ClientId, SharedString> {
         let (version, chunk) = version_data::try_decode(client_id_data)?;
         match version {
             1 => {
@@ -66,34 +66,34 @@ impl ClientId {
                 let client_id: ClientIdV1 =
                     serde_json::from_slice(&client_id_data).map_err(|err| {
                         log::error!("反序列化客户端身份数据失败: {}", err);
-                        return LightString::from_static("反序列化客户端身份数据失败!");
+                        return SharedString::from_static("反序列化客户端身份数据失败!");
                     })?;
                 if client_id.expired() {
-                    return Err(LightString::from_static("客户端身份数据已过期!"));
+                    return Err(SharedString::from_static("客户端身份数据已过期!"));
                 }
                 if check_signature(&client_id.rsa_pub_key, &client_id_data, &signature)? {
                     return Ok(ClientId::V1(client_id));
                 } else {
-                    return Err(LightString::from_static("客户端身份数据签名不正确！"));
+                    return Err(SharedString::from_static("客户端身份数据签名不正确！"));
                 }
             }
             _ => {
-                return Err(LightString::from_static("未知的客户端身份数据版本!"));
+                return Err(SharedString::from_static("未知的客户端身份数据版本!"));
             }
         }
     }
 
     pub fn encode<B>(
         &self,
-        sign: impl FnOnce(&[u8]) -> Result<B, LightString>,
-    ) -> Result<String, LightString>
+        sign: impl FnOnce(&[u8]) -> Result<B, SharedString>,
+    ) -> Result<String, SharedString>
     where
         B: AsRef<[u8]>,
     {
         let client_id_data = match self {
             ClientId::V1(client_id) => serde_json::to_vec(&client_id).map_err(|err| {
                 log::error!("序列化客户端身份数据失败: {}", err);
-                return LightString::from_static("序列化客户端身份数据失败!");
+                return SharedString::from_static("序列化客户端身份数据失败!");
             })?,
         };
         let signature = sign(&client_id_data)?;

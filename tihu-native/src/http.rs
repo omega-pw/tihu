@@ -27,7 +27,7 @@ use std::pin::Pin;
 use std::task::Context;
 use std::task::Poll;
 use sync_wrapper::SyncStream;
-use tihu::LightString;
+use tihu::SharedString;
 
 pub type BoxBody = http_body_util::combinators::BoxBody<Bytes, anyhow::Error>;
 
@@ -114,12 +114,12 @@ impl From<String> for Body {
     }
 }
 
-impl From<LightString> for Body {
+impl From<SharedString> for Body {
     #[inline]
-    fn from(data: LightString) -> Self {
+    fn from(data: SharedString) -> Self {
         match data {
-            LightString::Arc(data) => Body::from(data.to_string()),
-            LightString::Static(data) => Body::from(data),
+            SharedString::Arc(data) => Body::from(data.to_string()),
+            SharedString::Static(data) => Body::from(data),
         }
     }
 }
@@ -224,7 +224,7 @@ where
 
 #[async_trait]
 pub trait HttpHandler: Sync + Send + 'static {
-    fn namespace(&self) -> &[LightString];
+    fn namespace(&self) -> &[SharedString];
     async fn handle(
         &self,
         request: Request<Incoming>,
@@ -285,10 +285,10 @@ impl RequestData {
         let data = self
             .data_map
             .get(&type_id)
-            .ok_or_else(|| LightString::from_static("Data is empty!"))?;
+            .ok_or_else(|| SharedString::from_static("Data is empty!"))?;
         let data = data
             .downcast_ref::<T>()
-            .ok_or_else(|| LightString::from_static("Data not match the type!"))?;
+            .ok_or_else(|| SharedString::from_static("Data not match the type!"))?;
         return Ok(data);
     }
     pub fn remove<T>(&mut self) -> Result<Option<Box<T>>, anyhow::Error>
@@ -303,7 +303,7 @@ impl RequestData {
                 }
                 Err(data) => {
                     self.data_map.insert(type_id, Box::new(data));
-                    return Err(LightString::from_static("Data not match the type!").into());
+                    return Err(SharedString::from_static("Data not match the type!").into());
                 }
             }
         } else {

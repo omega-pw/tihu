@@ -1,22 +1,22 @@
 use tihu::api::Response;
-use tihu::LightString;
+use tihu::SharedString;
 
 #[derive(thiserror::Error, Debug)]
 pub enum ErrNo {
     #[error("用户未登录")]
     LoginRequired,
     #[error("{0}")]
-    CommonError(LightString),
+    CommonError(SharedString),
     #[error("{0}")]
     Other(#[from] anyhow::Error),
     #[error("配置错误，{0}")]
-    ConfigError(LightString),
+    ConfigError(SharedString),
     #[error("任务超时，{0}")]
-    Timeout(LightString),
+    Timeout(SharedString),
     #[error("没有可用的{0}服务")]
-    NoService(LightString),
+    NoService(SharedString),
     #[error("{0}服务忙")]
-    ServiceBusy(LightString),
+    ServiceBusy(SharedString),
     #[error("暂停服务")]
     ServicePaused,
     #[error("接口不存在")]
@@ -32,7 +32,7 @@ pub enum ErrNo {
     #[error("参数格式不正确")]
     ParamFormatError,
     #[error("参数无效,{0}")]
-    ParamInvalid(LightString),
+    ParamInvalid(SharedString),
     #[error("令牌无效")]
     TokenInvalid,
     #[error("没有权限")]
@@ -42,7 +42,7 @@ pub enum ErrNo {
     #[error("文件上传请求格式不正确")]
     MultipartRequired,
     #[error("未定义的枚举值,{0}")]
-    UndefinedEnumValue(LightString),
+    UndefinedEnumValue(SharedString),
     #[error("没有数据库连接")]
     NoDbClient,
     #[error("预编译sql失败,{0}")]
@@ -97,7 +97,7 @@ impl ErrNo {
             ErrNo::CacheOperationError(_) => -29,
         };
     }
-    pub fn message(&self) -> LightString {
+    pub fn message(&self) -> SharedString {
         return self.to_string().into();
     }
 }
@@ -129,7 +129,7 @@ where
     ErrNo::QueryError(error.into())
 }
 
-pub fn undefined_enum_value(err_msg: LightString) -> ErrNo {
+pub fn undefined_enum_value(err_msg: SharedString) -> ErrNo {
     ErrNo::UndefinedEnumValue(err_msg)
 }
 

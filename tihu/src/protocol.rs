@@ -1,14 +1,14 @@
-use super::LightString;
+use super::SharedString;
 use bytes::Bytes;
 use bytes::BytesMut;
 use integer_encoding::VarInt;
 use std::convert::TryInto;
 
-pub fn read_const_n<const N: usize>(mut input: Bytes) -> Result<([u8; N], Bytes), LightString> {
+pub fn read_const_n<const N: usize>(mut input: Bytes) -> Result<([u8; N], Bytes), SharedString> {
     let min_len = std::mem::size_of::<[u8; N]>();
     let mut output = [0; N];
     if input.len() < min_len {
-        return Err(LightString::from_static("输入数据长度不够"));
+        return Err(SharedString::from_static("输入数据长度不够"));
     } else {
         let rest = input.split_off(min_len);
         output.copy_from_slice(&input);
@@ -16,30 +16,30 @@ pub fn read_const_n<const N: usize>(mut input: Bytes) -> Result<([u8; N], Bytes)
     }
 }
 
-pub fn read_n(mut input: Bytes, n: usize) -> Result<(Bytes, Bytes), LightString> {
+pub fn read_n(mut input: Bytes, n: usize) -> Result<(Bytes, Bytes), SharedString> {
     let min_len = n;
     if input.len() < min_len {
-        return Err(LightString::from_static("输入数据长度不够"));
+        return Err(SharedString::from_static("输入数据长度不够"));
     } else {
         let rest = input.split_off(min_len);
         return Ok((input, rest));
     }
 }
 
-pub fn read_u8(mut input: Bytes) -> Result<(u8, Bytes), LightString> {
+pub fn read_u8(mut input: Bytes) -> Result<(u8, Bytes), SharedString> {
     let min_len = 1;
     if input.len() < min_len {
-        return Err(LightString::from_static("输入数据长度不够"));
+        return Err(SharedString::from_static("输入数据长度不够"));
     } else {
         let rest = input.split_off(min_len);
         return Ok((input[0], rest));
     }
 }
 
-pub fn read_be_u128(mut input: Bytes) -> Result<(u128, Bytes), LightString> {
+pub fn read_be_u128(mut input: Bytes) -> Result<(u128, Bytes), SharedString> {
     let min_len = std::mem::size_of::<u128>();
     if input.len() < min_len {
-        return Err(LightString::from_static("输入数据长度不够"));
+        return Err(SharedString::from_static("输入数据长度不够"));
     } else {
         let rest = input.split_off(min_len);
         return Ok((
@@ -47,17 +47,17 @@ pub fn read_be_u128(mut input: Bytes) -> Result<(u128, Bytes), LightString> {
                 input
                     .as_ref()
                     .try_into()
-                    .map_err(|err| -> LightString { format!("{:?}", err).into() })?,
+                    .map_err(|err| -> SharedString { format!("{:?}", err).into() })?,
             ),
             rest,
         ));
     }
 }
 
-pub fn read_be_i128(mut input: Bytes) -> Result<(i128, Bytes), LightString> {
+pub fn read_be_i128(mut input: Bytes) -> Result<(i128, Bytes), SharedString> {
     let min_len = std::mem::size_of::<i128>();
     if input.len() < min_len {
-        return Err(LightString::from_static("输入数据长度不够"));
+        return Err(SharedString::from_static("输入数据长度不够"));
     } else {
         let rest = input.split_off(min_len);
         return Ok((
@@ -65,17 +65,17 @@ pub fn read_be_i128(mut input: Bytes) -> Result<(i128, Bytes), LightString> {
                 input
                     .as_ref()
                     .try_into()
-                    .map_err(|err| -> LightString { format!("{:?}", err).into() })?,
+                    .map_err(|err| -> SharedString { format!("{:?}", err).into() })?,
             ),
             rest,
         ));
     }
 }
 
-pub fn read_be_u64(mut input: Bytes) -> Result<(u64, Bytes), LightString> {
+pub fn read_be_u64(mut input: Bytes) -> Result<(u64, Bytes), SharedString> {
     let min_len = std::mem::size_of::<u64>();
     if input.len() < min_len {
-        return Err(LightString::from_static("输入数据长度不够"));
+        return Err(SharedString::from_static("输入数据长度不够"));
     } else {
         let rest = input.split_off(min_len);
         return Ok((
@@ -83,17 +83,17 @@ pub fn read_be_u64(mut input: Bytes) -> Result<(u64, Bytes), LightString> {
                 input
                     .as_ref()
                     .try_into()
-                    .map_err(|err| -> LightString { format!("{:?}", err).into() })?,
+                    .map_err(|err| -> SharedString { format!("{:?}", err).into() })?,
             ),
             rest,
         ));
     }
 }
 
-pub fn read_be_i64(mut input: Bytes) -> Result<(i64, Bytes), LightString> {
+pub fn read_be_i64(mut input: Bytes) -> Result<(i64, Bytes), SharedString> {
     let min_len = std::mem::size_of::<i64>();
     if input.len() < min_len {
-        return Err(LightString::from_static("输入数据长度不够"));
+        return Err(SharedString::from_static("输入数据长度不够"));
     } else {
         let rest = input.split_off(min_len);
         return Ok((
@@ -101,7 +101,7 @@ pub fn read_be_i64(mut input: Bytes) -> Result<(i64, Bytes), LightString> {
                 input
                     .as_ref()
                     .try_into()
-                    .map_err(|err| -> LightString { format!("{:?}", err).into() })?,
+                    .map_err(|err| -> SharedString { format!("{:?}", err).into() })?,
             ),
             rest,
         ));

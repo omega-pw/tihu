@@ -1,7 +1,7 @@
 use super::tuple::TupleMany;
 use super::tuple::TupleManyStruct;
 use super::tuple::TupleManyTrait;
-use super::LightString;
+use super::SharedString;
 use bytes::Bytes;
 use integer_encoding::VarInt;
 
@@ -36,7 +36,7 @@ pub fn encode_chunks(chunks: &[&[u8]], output: Option<Vec<u8>>) -> Vec<u8> {
     return output;
 }
 
-pub fn decode_chunks<const N: usize>(mut chunk: Bytes) -> Result<TupleMany<N, Bytes>, LightString>
+pub fn decode_chunks<const N: usize>(mut chunk: Bytes) -> Result<TupleMany<N, Bytes>, SharedString>
 where
     TupleManyStruct<N>: TupleManyTrait<Bytes>,
 {
@@ -44,10 +44,10 @@ where
     let mut chunks: Vec<Bytes> = Vec::with_capacity(count);
     while 1 < count {
         let (size, cost) = usize::decode_var(&chunk)
-            .ok_or_else(|| LightString::from_static("输入数据长度不够"))?;
+            .ok_or_else(|| SharedString::from_static("输入数据长度不够"))?;
         let mut remain = chunk.split_off(cost);
         if remain.len() < size {
-            return Err(LightString::from_static("输入数据长度不够"));
+            return Err(SharedString::from_static("输入数据长度不够"));
         } else {
             chunk = remain.split_off(size);
             chunks.push(remain);
@@ -56,5 +56,5 @@ where
     }
     chunks.push(chunk);
     return TupleManyStruct::try_from_iter(chunks.into_iter())
-        .map_err(|_| LightString::from_static("数据元素个数不正确"));
+        .map_err(|_| SharedString::from_static("数据元素个数不正确"));
 }
