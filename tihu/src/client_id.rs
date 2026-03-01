@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ClientIdV1 {
+    client_id: SharedString,
     rsa_pub_key: SharedString,
     expire_time: i64, //过期时间，单位：秒
 }
@@ -24,8 +25,13 @@ impl ClientIdV1 {
 }
 
 impl ClientId {
-    pub fn new(rsa_pub_key: SharedString, expire_time: DateTime<Utc>) -> ClientId {
+    pub fn new(
+        client_id: SharedString,
+        rsa_pub_key: SharedString,
+        expire_time: DateTime<Utc>,
+    ) -> ClientId {
         ClientId::V1(ClientIdV1 {
+            client_id,
             rsa_pub_key,
             expire_time: expire_time.timestamp(),
         })
@@ -34,6 +40,12 @@ impl ClientId {
     fn version(&self) -> u64 {
         match self {
             ClientId::V1(_) => 1,
+        }
+    }
+
+    pub fn client_id(&self) -> &SharedString {
+        match self {
+            ClientId::V1(client_id) => &client_id.client_id,
         }
     }
 
